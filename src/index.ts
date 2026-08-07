@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 //@ts-ignore
@@ -35,7 +35,7 @@ app.get("/api/products", async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
+//route ke 2 : chekcout
 app.post("/api/checkout", async (req: Request, res: Response) => {
   try {
     //1. validasi inputan atau orderan
@@ -99,66 +99,66 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
         quantity: item.quantity,
         price: product.price,
       });
-
-      //4. masukkan data order ke tabel order
-      const { data: newOrder, error: orderError } = await supabase
-        .from("orders")
-        .insert([
-          {
-            customer_email,
-            customer_name,
-            total_amount,
-            status: "PENDING",
-          },
-        ])
-        .select()
-        .single();
-
-      if (!newOrder || orderError) {
-        throw new Error(`gagal masukkan orderan ${orderError?.message}`);
-      }
-
-      //5. masukkan data ke tabel orderitems
-      const finalOrderItems = orderItemsToInsert.map((item) => ({
-        ...item,
-        order_id: newOrder.id,
-      }));
-      const { error: orderItemsError } = await supabase
-        .from("orders_items")
-        .insert(finalOrderItems);
-
-      if (orderItemsError) {
-        throw new Error(orderItemsError.message);
-      }
-
-      //6. tampilkan informasi ke customer
-
-      const parameter = {
-        transaction_details: {
-          order_id: newOrder.id,
-          gross_amount: total_amount,
-        },
-        customer_details: {
-          first_name: customer_name,
-          email: customer_email,
-        },
-      };
-
-      const transaction = await snap.createTransaction(parameter);
-
-      res.status(201).json({
-        success: true,
-        message: "Pesanan Berhasil Dilakukan",
-        data: {
-          order_id: newOrder.id,
-          customer_name: newOrder.customer_name,
-          status: newOrder.status,
-          total_amount: newOrder.total_amount,
-          payment_url: transaction.redirect_url,
-          snap_token: transaction.token,
-        },
-      });
     }
+
+    //4. masukkan data order ke tabel order
+    const { data: newOrder, error: orderError } = await supabase
+      .from("orders")
+      .insert([
+        {
+          customer_email,
+          customer_name,
+          total_amount,
+          status: "PENDING",
+        },
+      ])
+      .select()
+      .single();
+
+    if (!newOrder || orderError) {
+      throw new Error(`gagal masukkan orderan ${orderError?.message}`);
+    }
+
+    //5. masukkan data ke tabel orderitems
+    const finalOrderItems = orderItemsToInsert.map((item) => ({
+      ...item,
+      order_id: newOrder.id,
+    }));
+    const { error: orderItemsError } = await supabase
+      .from("orders_items")
+      .insert(finalOrderItems);
+
+    if (orderItemsError) {
+      throw new Error(orderItemsError.message);
+    }
+
+    //6. tampilkan informasi ke customer
+
+    const parameter = {
+      transaction_details: {
+        order_id: newOrder.id,
+        gross_amount: total_amount,
+      },
+      customer_details: {
+        first_name: customer_name,
+        email: customer_email,
+      },
+    };
+
+    const transaction = await snap.createTransaction(parameter);
+
+    res.status(201).json({
+      success: true,
+      message: "Pesanan Berhasil Dilakukan",
+      data: {
+        order_id: newOrder.id,
+        customer_name: newOrder.customer_name,
+        status: newOrder.status,
+        total_amount: newOrder.total_amount,
+        payment_url: transaction.redirect_url,
+        snap_token: transaction.token,
+      },
+    });
   } catch (error: any) {
     res.status(500).json({
       success: false,
@@ -166,6 +166,91 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
     });
   }
 });
+
+// route ke 3 : payment
+app.post(
+  "/api/payments/notification",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const notificationJson = req.body;
+
+      const orderId = notificationJson.order_id;
+      const transactionStatus = notificationJson.transaction_status;
+      const fraudStatus = notificationJson.fraud_status;
+      console.log(
+        `Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`,
+      );
+      //cek validasi payment status
+      let isPaymentStatus = false;
+      if (transactionStatus === "capture" && fraudStatus === "accept") {
+        isPaymentStatus = true;
+      } else if (transactionStatus === "settlement") {
+        isPaymentStatus = true;
+      }
+
+      //payment sukses
+      if (isPaymentStatus) {
+        const { error: updateOrderError } = await supabase
+          .from("orders")
+          .update({
+            status: "SUCCESS",
+          })
+          .eq("id", orderId);
+
+        if (updateOrderError) throw updateOrderError;
+
+        // update stock product & hitung hasil income untuk tabel transaksi database
+        const { data: ordersItems, error: orderItemsError } = await supabase
+          .from("orders_items")
+          .select("product_id, price, quantity")
+          .eq("order_id", orderId);
+
+        if (orderItemsError || !ordersItems) throw orderItemsError;
+
+        let totalIncome = 0;
+        for (const item of ordersItems) {
+          const { data: products } = await supabase
+            .from("products")
+            .select("stock, price")
+            .eq("id", item.product_id)
+            .single();
+
+          if (products) {
+            const newStock = products?.stock - item.quantity;
+
+            await supabase
+              .from("products")
+              .update({ stock: newStock })
+              .eq("id", item.product_id);
+          }
+          totalIncome = item.price * item.quantity;
+        }
+        // insert transaction database
+        await supabase.from("transactions").insert({
+          amount: totalIncome,
+          type: "income",
+          category: "sales",
+          description: `Penjualan Parfum untuk Order ID: ${orderId}`,
+        });
+        console.log(
+          `✅ Order ${orderId} Berhasil Diproses! Stok Dipotong & Income Dicatat.`,
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        status: "OK",
+        message: "transaksi sudah dilakukan dan database berhasil di update",
+      });
+    } catch (error: any) {
+      console.error("Error Webhook", error.message);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  },
+);
 
 app.listen(PORT, () => {
   console.log(`Server aktif di http://localhost:${PORT}`);
