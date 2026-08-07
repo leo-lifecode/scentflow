@@ -1,8 +1,10 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-
+//@ts-ignore
+import midtransClient from "midtrans-client";
 dotenv.config();
+
 const app = express();
 app.use(express.json());
 
@@ -16,6 +18,12 @@ const supabaseKey = process.env.SUPABASE_KEY || "";
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: { persistSession: false },
+});
+
+const snap = new midtransClient.Snap({
+  isProduction: false,
+  serverKey: (process.env.MIDTRANS_SERVER_KEY || "").trim(),
+  clientKey: (process.env.MIDTRANS_CLIENT_KEY || "").trim(),
 });
 
 app.get("/api/products", async (req: Request, res: Response) => {
@@ -124,6 +132,20 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
       }
 
       //6. tampilkan informasi ke customer
+
+      const parameter = {
+        transaction_details: {
+          order_id: newOrder.id,
+          gross_amount: total_amount,
+        },
+        customer_details: {
+          first_name: customer_name,
+          email: customer_email,
+        },
+      };
+
+      const transaction = await snap.createTransaction(parameter);
+
       res.status(201).json({
         success: true,
         message: "Pesanan Berhasil Dilakukan",
@@ -132,6 +154,8 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
           customer_name: newOrder.customer_name,
           status: newOrder.status,
           total_amount: newOrder.total_amount,
+          payment_url: transaction.redirect_url,
+          snap_token: transaction.token,
         },
       });
     }
