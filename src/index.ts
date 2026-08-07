@@ -72,8 +72,14 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
     //3. cek harga nya dan masukkan orderan nya
     let total_amount = 0;
     const orderItemsToInsert = [];
+    const productsMap = new Map(
+      dbProducts.map((products) => {
+        return [products.id, products];
+      }),
+    );
+
     for (const item of items) {
-      const product = dbProducts.find((p) => p.id === item.product_id);
+      const product = productsMap.get(item.product_id);
 
       if (!product) {
         res.status(404).json({
