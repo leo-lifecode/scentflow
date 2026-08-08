@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  # Service 1: Backend Express (ScentFlow)
+  backend:
+    build: .
+    container_name: scentflow_backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src # Real-time sync kode saat kamu mengedit file di VS Code
+    restart: always
+
+  # Service 2: Self-Hosted n8n Automation Engine
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: scentflow_n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+    volumes:
+      - n8n_data:/home/node/.n8n # Menyimpan data workflow n8n agar tidak hilang
+    restart: always
+
+volumes:
+  n8n_data:
