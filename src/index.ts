@@ -75,7 +75,7 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
     const productsMap = new Map(
       dbProducts.map((products) => {
         return [products.id, products];
-      }),
+      })
     );
 
     for (const item of items) {
@@ -183,8 +183,22 @@ app.post(
       const orderId = notificationJson.order_id;
       const transactionStatus = notificationJson.transaction_status;
       const fraudStatus = notificationJson.fraud_status;
+
       console.log(
-        `Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`,
+        `Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`
+      );
+
+      // 1. Tangani Notifikasi Tes dari Midtrans Dashboard
+      if (orderId.startsWith("payment_notif_test_")) {
+        console.log(" Notifikasi tes dari Midtrans berhasil diterima.");
+        res
+          .status(200)
+          .json({ status: "success", message: "Test notification received" });
+        return;
+      }
+
+      console.log(
+        `Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`
       );
       //cek validasi payment status
       let isPaymentStatus = false;
@@ -229,7 +243,7 @@ app.post(
               .update({ stock: newStock })
               .eq("id", item.product_id);
           }
-          totalIncome = item.price * item.quantity;
+          totalIncome += item.price * item.quantity;
         }
         // insert transaction database
         await supabase.from("transactions").insert({
@@ -239,7 +253,7 @@ app.post(
           description: `Penjualan Parfum untuk Order ID: ${orderId}`,
         });
         console.log(
-          `✅ Order ${orderId} Berhasil Diproses! Stok Dipotong & Income Dicatat.`,
+          `✅ Order ${orderId} Berhasil Diproses! Stok Dipotong & Income Dicatat.`
         );
       }
 
@@ -255,7 +269,7 @@ app.post(
         message: error.message,
       });
     }
-  },
+  }
 );
 
 app.listen(PORT, () => {
