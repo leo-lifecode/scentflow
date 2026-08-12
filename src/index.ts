@@ -255,6 +255,28 @@ app.post(
         console.log(
           `✅ Order ${orderId} Berhasil Diproses! Stok Dipotong & Income Dicatat.`
         );
+
+        try {
+          await fetch(
+            "http://localhost:5678/webhook/scentflow-payment-success",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                amount: totalIncome,
+                status: "SUCCESS",
+                customer_email:
+                  notificationJson.customer_email || "customer@example.com",
+                timestamp: new Date().toISOString(),
+              }),
+            }
+          );
+          console.log(
+            "🚀 Event transaksi berhasil dikirim ke n8n Automation Engine."
+          );
+        } catch (n8nError: any) {
+          console.error("⚠️ Gagal memanggil n8n webhook:", n8nError.message);
+        }
       }
 
       res.status(200).json({
