@@ -47,3 +47,5 @@ Pastikan sudah terinstall di komputer:
 ```bash
 git clone [https://github.com/USERNAME_KAMU/scentflow-backend.git](https://github.com/USERNAME_KAMU/scentflow-backend.git)
 cd scentflow-backend
+npm install
+touch .env
