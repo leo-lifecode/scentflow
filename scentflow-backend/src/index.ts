@@ -1,12 +1,35 @@
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import cors from "cors";
 //@ts-ignore
 import midtransClient from "midtrans-client";
 dotenv.config();
 
 const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
+
 app.use(express.json());
+
+// route GET transactions untuk Admin Dashboard
+app.get("/api/transactions", async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    res.status(200).json({ success: true, data: data });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World");
@@ -40,13 +63,7 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
   try {
     //1. validasi inputan atau orderan
     const { customer_name, customer_email, items } = req.body;
-    if (
-      !customer_name ||
-      !customer_email ||
-      !items ||
-      items.length === 0 ||
-      !Array.isArray(items)
-    ) {
+    if (!customer_name || !customer_email || !items || items.length === 0 || !Array.isArray(items)) {
       res.status(400).json({
         success: false,
         message: "data tidak lengkap",
@@ -75,7 +92,7 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
     const productsMap = new Map(
       dbProducts.map((products) => {
         return [products.id, products];
-      })
+      }),
     );
 
     for (const item of items) {
@@ -130,9 +147,7 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
       ...item,
       order_id: newOrder.id,
     }));
-    const { error: orderItemsError } = await supabase
-      .from("orders_items")
-      .insert(finalOrderItems);
+    const { error: orderItemsError } = await supabase.from("orders_items").insert(finalOrderItems);
 
     if (orderItemsError) {
       throw new Error(orderItemsError.message);
@@ -144,6 +159,9 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
       transaction_details: {
         order_id: newOrder.id,
         gross_amount: total_amount,
+      },
+      callbacks: {
+        finish: "http://localhost:3000",
       },
       customer_details: {
         first_name: customer_name,
@@ -174,125 +192,105 @@ app.post("/api/checkout", async (req: Request, res: Response) => {
 });
 
 // route ke 3 : payment
-app.post(
-  "/api/payments/notification",
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const notificationJson = req.body;
+app.post("/api/payments/notification", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const notificationJson = req.body;
 
-      const orderId = notificationJson.order_id;
-      const transactionStatus = notificationJson.transaction_status;
-      const fraudStatus = notificationJson.fraud_status;
+    const orderId = notificationJson.order_id;
+    const transactionStatus = notificationJson.transaction_status;
+    const fraudStatus = notificationJson.fraud_status;
 
-      console.log(
-        `Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`
-      );
+    console.log(`Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`);
 
-      // 1. Tangani Notifikasi Tes dari Midtrans Dashboard
-      if (orderId.startsWith("payment_notif_test_")) {
-        console.log(" Notifikasi tes dari Midtrans berhasil diterima.");
-        res
-          .status(200)
-          .json({ status: "success", message: "Test notification received" });
-        return;
-      }
-
-      console.log(
-        `Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`
-      );
-      //cek validasi payment status
-      let isPaymentStatus = false;
-      if (transactionStatus === "capture" && fraudStatus === "accept") {
-        isPaymentStatus = true;
-      } else if (transactionStatus === "settlement") {
-        isPaymentStatus = true;
-      }
-
-      //payment sukses
-      if (isPaymentStatus) {
-        const { error: updateOrderError } = await supabase
-          .from("orders")
-          .update({
-            status: "SUCCESS",
-          })
-          .eq("id", orderId);
-
-        if (updateOrderError) throw updateOrderError;
-
-        // update stock product & hitung hasil income untuk tabel transaksi database
-        const { data: ordersItems, error: orderItemsError } = await supabase
-          .from("orders_items")
-          .select("product_id, price, quantity")
-          .eq("order_id", orderId);
-
-        if (orderItemsError || !ordersItems) throw orderItemsError;
-
-        let totalIncome = 0;
-        for (const item of ordersItems) {
-          const { data: products } = await supabase
-            .from("products")
-            .select("stock, price")
-            .eq("id", item.product_id)
-            .single();
-
-          if (products) {
-            const newStock = products?.stock - item.quantity;
-
-            await supabase
-              .from("products")
-              .update({ stock: newStock })
-              .eq("id", item.product_id);
-          }
-          totalIncome += item.price * item.quantity;
-        }
-        // insert transaction database
-        await supabase.from("transactions").insert({
-          amount: totalIncome,
-          type: "income",
-          category: "sales",
-          description: `Penjualan Parfum untuk Order ID: ${orderId}`,
-        });
-        console.log(
-          `✅ Order ${orderId} Berhasil Diproses! Stok Dipotong & Income Dicatat.`
-        );
-
-        try {
-          await fetch(
-            "http://localhost:5678/webhook/scentflow-payment-success",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                amount: totalIncome,
-                status: "SUCCESS",
-                customer_email:
-                  notificationJson.customer_email || "customer@example.com",
-                timestamp: new Date().toISOString(),
-              }),
-            }
-          );
-          console.log(
-            "🚀 Event transaksi berhasil dikirim ke n8n Automation Engine."
-          );
-        } catch (n8nError: any) {
-          console.error("⚠️ Gagal memanggil n8n webhook:", n8nError.message);
-        }
-      }
-
-      res.status(200).json({
-        success: true,
-        status: "OK",
-        message: "transaksi sudah dilakukan dan database berhasil di update",
-      });
-    } catch (error: any) {
-      console.error("Error Webhook", error.message);
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
+    // 1. Tangani Notifikasi Tes dari Midtrans Dashboard
+    if (orderId.startsWith("payment_notif_test_")) {
+      console.log(" Notifikasi tes dari Midtrans berhasil diterima.");
+      res.status(200).json({ status: "success", message: "Test notification received" });
+      return;
     }
+
+    console.log(`Pesan Webhook Masuk! Order ID: ${orderId} | Status: ${transactionStatus}`);
+    //cek validasi payment status
+    let isPaymentStatus = false;
+    if (transactionStatus === "capture" && fraudStatus === "accept") {
+      isPaymentStatus = true;
+    } else if (transactionStatus === "settlement") {
+      isPaymentStatus = true;
+    }
+
+    //payment sukses
+    if (isPaymentStatus) {
+      const { error: updateOrderError } = await supabase
+        .from("orders")
+        .update({
+          status: "SUCCESS",
+        })
+        .eq("id", orderId);
+
+      if (updateOrderError) throw updateOrderError;
+
+      // update stock product & hitung hasil income untuk tabel transaksi database
+      const { data: ordersItems, error: orderItemsError } = await supabase
+        .from("orders_items")
+        .select("product_id, price, quantity")
+        .eq("order_id", orderId);
+
+      if (orderItemsError || !ordersItems) throw orderItemsError;
+
+      let totalIncome = 0;
+      for (const item of ordersItems) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("stock, price")
+          .eq("id", item.product_id)
+          .single();
+
+        if (products) {
+          const newStock = products?.stock - item.quantity;
+
+          await supabase.from("products").update({ stock: newStock }).eq("id", item.product_id);
+        }
+        totalIncome += item.price * item.quantity;
+      }
+      // insert transaction database
+      await supabase.from("transactions").insert({
+        amount: totalIncome,
+        type: "income",
+        category: "sales",
+        description: `Penjualan Parfum untuk Order ID: ${orderId}`,
+      });
+      console.log(`✅ Order ${orderId} Berhasil Diproses! Stok Dipotong & Income Dicatat.`);
+
+      try {
+        await fetch("http://localhost:5678/webhook/scentflow-payment-success", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: totalIncome,
+            status: "SUCCESS",
+            customer_email: notificationJson.customer_email || "customer@example.com",
+            timestamp: new Date().toISOString(),
+          }),
+        });
+        console.log("🚀 Event transaksi berhasil dikirim ke n8n Automation Engine.");
+      } catch (n8nError: any) {
+        console.error("⚠️ Gagal memanggil n8n webhook:", n8nError.message);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      status: "OK",
+      message: "transaksi sudah dilakukan dan database berhasil di update",
+    });
+  } catch (error: any) {
+    console.error("Error Webhook", error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
-);
+});
 
 app.listen(PORT, () => {
   console.log(`Server aktif di http://localhost:${PORT}`);
