@@ -1,16 +1,11 @@
 import { supabase } from "../config/database";
 import { snap } from "../config/midtrans";
 import { env } from "../config/env";
+import { CheckoutInput } from "../validators/checkout.validator";
 
 export interface CheckoutItem {
   product_id: string;
   quantity: number;
-}
-
-export interface CheckoutInput {
-  customer_name: string;
-  customer_email: string;
-  items: CheckoutItem[];
 }
 
 export async function createCheckout(input: CheckoutInput) {
