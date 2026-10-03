@@ -15,11 +15,11 @@ export function proxy(request: NextRequest) {
   }
 
   if (path.startsWith("/checkout") && !hasSession) {
-    return NextResponse.redirect(new URL("/admin/login?redirect=/checkout", request.url));
+    return NextResponse.redirect(new URL("/login?redirect=/checkout", request.url));
   }
 
   if (path.startsWith("/orders") && !hasSession) {
-    return NextResponse.redirect(new URL("/admin/login?redirect=/orders", request.url));
+    return NextResponse.redirect(new URL("/login?redirect=/orders", request.url));
   }
 
   if (path === "/admin/login" && hasSession) {
