@@ -1,5 +1,5 @@
 -- ScentFlow: payment settlement must be atomic and idempotent.
--- The application currently uses `orders_items`; keep this name consistent with the backend.
+-- The application uses `orders_items`; keep this name consistent with the backend.
 
 alter table public.transactions
   add column if not exists order_id uuid references public.orders(id);
@@ -31,7 +31,8 @@ begin
   end if;
 
   if v_status = 'SUCCESS' then
-    return query select coalesce((select amount from public.transactions where order_id = p_order_id limit 1), 0), true;
+    return query
+      select coalesce((select amount from public.transactions where order_id = p_order_id limit 1), 0), true;
     return;
   end if;
 
@@ -70,6 +71,12 @@ begin
   return query select v_total, false;
 exception
   when unique_violation then
-    return query select coalesce((select amount from public.transactions where order_id = p_order_id limit 1), 0), true;
+    return query
+      select coalesce((select amount from public.transactions where order_id = p_order_id limit 1), 0), true;
 end;
 $$;
+
+-- This function changes inventory and financial state. It must never be callable
+-- directly by anonymous or authenticated API clients.
+revoke execute on function public.process_paid_order(uuid) from public, anon, authenticated;
+grant execute on function public.process_paid_order(uuid) to service_role;
