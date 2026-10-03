@@ -35,6 +35,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         withCredentials: true,
       });
       setUser(response.data.user);
+      return;
+    } catch {
+      // The access token may be expired while the refresh token is still valid.
+    }
+
+    try {
+      await api.post("/auth/refresh", undefined, { withCredentials: true });
+      const response = await api.get<{ user: AuthUser }>("/auth/me", {
+        withCredentials: true,
+      });
+      setUser(response.data.user);
     } catch {
       setUser(null);
     }
