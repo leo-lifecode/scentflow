@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { getUser } from "../services/auth.service";
 
+const ACCESS_COOKIE = "scentflow_access_token";
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -9,10 +11,25 @@ export interface AuthenticatedRequest extends Request {
   };
 }
 
-function getBearerToken(req: Request) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) return null;
-  return header.slice("Bearer ".length).trim() || null;
+function getCookie(req: Request, name: string) {
+  const header = req.headers.cookie ?? "";
+  for (const item of header.split(";")) {
+    const index = item.indexOf("=");
+    if (index === -1) continue;
+    if (item.slice(0, index).trim() === name) {
+      return decodeURIComponent(item.slice(index + 1).trim()) || null;
+    }
+  }
+  return null;
+}
+
+function getAccessToken(req: Request) {
+  const authorization = req.headers.authorization;
+  if (authorization?.startsWith("Bearer ")) {
+    return authorization.slice("Bearer ".length).trim() || null;
+  }
+
+  return getCookie(req, ACCESS_COOKIE);
 }
 
 export async function requireAuth(
@@ -21,7 +38,7 @@ export async function requireAuth(
   next: NextFunction
 ) {
   try {
-    const token = getBearerToken(req);
+    const token = getAccessToken(req);
     if (!token) {
       res.status(401).json({ message: "Authentication diperlukan" });
       return;
