@@ -8,14 +8,17 @@ export interface CheckoutItem {
   quantity: number;
 }
 
+interface CheckoutServiceInput extends CheckoutInput {
+  user_id: string;
+}
+
 interface OrderItemInsert extends CheckoutItem {
   price: number;
 }
 
-export async function createCheckout(input: CheckoutInput) {
-  const { customer_name, customer_email, items } = input;
+export async function createCheckout(input: CheckoutServiceInput) {
+  const { user_id, customer_name, customer_email, items } = input;
 
-  // Normalize duplicate product IDs so one product is represented by one order item.
   const quantities = new Map<string, number>();
   for (const item of items) {
     quantities.set(item.product_id, (quantities.get(item.product_id) ?? 0) + item.quantity);
@@ -55,7 +58,13 @@ export async function createCheckout(input: CheckoutInput) {
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .insert({ customer_email, customer_name, total_amount: totalAmount, status: "PENDING" })
+    .insert({
+      user_id,
+      customer_email,
+      customer_name,
+      total_amount: totalAmount,
+      status: "PENDING",
+    })
     .select()
     .single();
 
