@@ -22,10 +22,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?redirect=/orders", request.url));
   }
 
-  if (path === "/admin/login" && hasSession) {
-    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-  }
-
   return NextResponse.next();
 }
 
