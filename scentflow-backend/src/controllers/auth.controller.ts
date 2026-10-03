@@ -55,9 +55,7 @@ export async function registerController(req: Request, res: Response) {
 
   res.status(201).json({
     user: data.user,
-    session: data.session
-      ? { expires_at: data.session.expires_at }
-      : null,
+    session: data.session ? { expires_at: data.session.expires_at } : null,
     requiresEmailConfirmation: !data.session,
   });
 }
@@ -75,8 +73,14 @@ export async function loginController(req: Request, res: Response) {
 
 export async function meController(req: Request, res: Response) {
   const cookies = parseCookies(req);
-  const user = await getUser(cookies[ACCESS_COOKIE]);
+  const accessToken = cookies[ACCESS_COOKIE];
 
+  if (!accessToken) {
+    res.status(401).json({ message: "Session tidak ditemukan" });
+    return;
+  }
+
+  const user = await getUser(accessToken);
   res.json({ user });
 }
 
