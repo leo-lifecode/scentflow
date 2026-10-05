@@ -58,9 +58,6 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           onError: function () {
             alert("Pembayaran Gagal!");
           },
-          onClose: function () {
-            console.log("Customer menutup pop-up Snap.");
-          },
         });
       } else {
         clearCart();
