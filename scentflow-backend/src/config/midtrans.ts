@@ -2,8 +2,11 @@
 import midtransClient from "midtrans-client";
 import { env } from "./env";
 
-export const snap = new midtransClient.Snap({
+const midtransConfig = {
   isProduction: false,
   serverKey: env.midtransServerKey,
   clientKey: env.midtransClientKey,
-});
+};
+
+export const snap = new midtransClient.Snap(midtransConfig);
+export const coreApi = new midtransClient.CoreApi(midtransConfig);
