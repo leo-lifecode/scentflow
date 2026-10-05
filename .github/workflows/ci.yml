@@ -20,6 +20,7 @@ jobs:
           cache: npm
           cache-dependency-path: scentflow-backend/package-lock.json
       - run: npm ci
+      - run: npm run test
       - run: npm run typecheck
 
   frontend:
