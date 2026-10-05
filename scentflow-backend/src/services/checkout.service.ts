@@ -82,7 +82,9 @@ export async function createCheckout(input: CheckoutServiceInput) {
   try {
     const transaction = await snap.createTransaction({
       transaction_details: { order_id: order.id, gross_amount: totalAmount },
-      callbacks: { finish: env.frontendUrl },
+      callbacks: {
+        finish: `${env.frontendUrl.replace(/\/$/, "")}/order-success?order_id=${encodeURIComponent(order.id)}`,
+      },
       customer_details: { first_name: customer_name, email: customer_email },
     });
 
