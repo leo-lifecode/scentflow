@@ -4,7 +4,7 @@
   "description": "ScentFlow adalah sistem backend berbasis **Event-Driven Architecture** yang dirancang untuk mengelola inventaris toko parfum, transaksi penjualan, dan otomatisasi laporan keuangan.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsx --test test/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "dev": "tsx watch src/index.ts"
   },
