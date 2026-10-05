@@ -2,27 +2,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Sparkles, ArrowLeft } from "lucide-react";
+import { Lock, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Kredensial Admin Sederhana (Dapat disesuaikan dengan Supabase Auth nantinya)
-    if (email === "admin@scentflow.com" && password === "admin123") {
-      // Simpan cookie admin token selama 1 hari
-      document.cookie = "admin_token=scentflow_authenticated_session; path=/; max-age=86400";
-      router.push("/admin/dashboard");
-    } else {
+    try {
+      const user = await login(email, password);
+      if (user.app_metadata?.role !== "admin") {
+        setError("Akun ini tidak memiliki akses admin.");
+        return;
+      }
+      router.replace("/admin/dashboard");
+    } catch {
       setError("Email atau kata sandi admin tidak valid.");
+    } finally {
       setLoading(false);
     }
   };
@@ -60,7 +65,6 @@ export default function AdminLoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@scentflow.com"
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
             />
           </div>
@@ -74,7 +78,6 @@ export default function AdminLoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
               className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
             />
           </div>
