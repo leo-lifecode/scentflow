@@ -24,6 +24,23 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   if (!isOpen) return null;
 
+  const finishSuccessfulPayment = async (orderId: string) => {
+    // The browser callback is only a UX signal. The backend verifies the
+    // transaction with Midtrans before changing inventory or financial state.
+    const syncResponse = await api.get(`/payments/${encodeURIComponent(orderId)}/status`);
+    const payment = syncResponse.data.data;
+
+    if (payment.status !== "SUCCESS") {
+      throw new Error("Pembayaran belum terkonfirmasi oleh Midtrans.");
+    }
+
+    clearCart();
+    setName("");
+    setEmail("");
+    onClose();
+    router.push(`/order-success?order_id=${encodeURIComponent(orderId)}`);
+  };
+
   const handleCheckout = async () => {
     if (!name.trim() || !email.trim()) {
       alert("Silakan lengkapi nama dan email Anda sebelum melakukan checkout.");
@@ -46,11 +63,10 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       if (window.snap && snap_token) {
         window.snap.pay(snap_token, {
           onSuccess: function () {
-            clearCart();
-            setName("");
-            setEmail("");
-            onClose();
-            router.push(`/order-success?order_id=${order_id}`);
+            void finishSuccessfulPayment(order_id).catch((error) => {
+              console.error("Payment verification failed:", error);
+              alert("Pembayaran diterima, tetapi konfirmasi pesanan belum selesai. Buka halaman pesanan beberapa saat lagi.");
+            });
           },
           onPending: function () {
             alert("Menunggu penyelesaian pembayaran.");
@@ -60,13 +76,11 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           },
         });
       } else {
-        clearCart();
-        onClose();
-        router.push(`/order-success?order_id=${order_id || "LOCAL-TEST"}`);
+        await finishSuccessfulPayment(order_id || "LOCAL-TEST");
       }
     } catch (error: unknown) {
       console.error("Error Checkout:", error);
-      const message = (error as ApiErrorResponse).response?.data?.message;
+      const message = (error as ApiErrorResponse).response?.data?.message || (error as Error).message;
       alert(message || "Gagal memproses checkout.");
     } finally {
       setLoading(false);
