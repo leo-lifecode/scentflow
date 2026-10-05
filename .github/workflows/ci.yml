@@ -12,6 +12,13 @@ jobs:
     defaults:
       run:
         working-directory: scentflow-backend
+    env:
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_KEY: test-only-key
+      MIDTRANS_SERVER_KEY: test-server-key
+      MIDTRANS_CLIENT_KEY: test-client-key
+      FRONTEND_URL: http://localhost:3000
+      PORT: 5000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

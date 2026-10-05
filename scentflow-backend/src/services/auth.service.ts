@@ -45,6 +45,19 @@ export async function getUser(accessToken: string) {
     throw error ?? new Error("Session tidak valid");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  if (profile?.role) {
+    data.user.app_metadata = {
+      ...(data.user.app_metadata ?? {}),
+      role: profile.role,
+    };
+  }
+
   return data.user;
 }
 
