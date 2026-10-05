@@ -13,6 +13,7 @@ function OrderSuccessContent() {
 
   useEffect(() => {
     if (!orderId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus("error");
       return;
     }
@@ -23,10 +24,15 @@ function OrderSuccessContent() {
       .get(`/payments/${encodeURIComponent(orderId)}/status`)
       .then((response) => {
         if (!active) return;
+        // Payment verification is asynchronous and intentionally updates this view after the response.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStatus(response.data.data?.status === "SUCCESS" ? "success" : "pending");
       })
       .catch(() => {
-        if (active) setStatus("error");
+        if (active) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setStatus("error");
+        }
       });
 
     return () => {
