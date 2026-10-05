@@ -33,6 +33,27 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
+create or replace function public.prevent_profile_role_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.role() <> 'service_role' and new.role is distinct from old.role then
+    raise exception 'Profile role can only be changed by service_role';
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function public.prevent_profile_role_change() from public, anon, authenticated;
+
+drop trigger if exists prevent_profile_role_change on public.profiles;
+create trigger prevent_profile_role_change
+before update on public.profiles
+for each row execute function public.prevent_profile_role_change();
+
 alter table public.orders enable row level security;
 alter table public.orders_items enable row level security;
 alter table public.transactions enable row level security;
