@@ -31,66 +31,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const response = await api.get<{ user: AuthUser }>("/auth/me", {
-        withCredentials: true,
-      });
-      setUser(response.data.user);
-      return;
-    } catch {
-      // The access token may be expired while the refresh token is still valid.
-    }
+      try {
+        const response = await api.get<{ user: AuthUser }>("/auth/me", { withCredentials: true });
+        setUser(response.data.user);
+        return;
+      } catch {
+        // The access token may be expired while the refresh token is still valid.
+      }
 
-    try {
-      await api.post("/auth/refresh", undefined, { withCredentials: true });
-      const response = await api.get<{ user: AuthUser }>("/auth/me", {
-        withCredentials: true,
-      });
-      setUser(response.data.user);
-    } catch {
-      setUser(null);
+      try {
+        await api.post("/auth/refresh", undefined, { withCredentials: true });
+        const response = await api.get<{ user: AuthUser }>("/auth/me", { withCredentials: true });
+        setUser(response.data.user);
+      } catch {
+        setUser(null);
+      }
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh().finally(() => setLoading(false));
+    void refresh();
   }, [refresh]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const response = await api.post<{ user: AuthUser }>(
-      "/auth/login",
-      { email, password },
-      { withCredentials: true }
-    );
+    const response = await api.post<{ user: AuthUser }>("/auth/login", { email, password }, { withCredentials: true });
     setUser(response.data.user);
     return response.data.user;
   }, []);
 
-  const register = useCallback(
-    async (email: string, password: string, fullName?: string) => {
-      const response = await api.post<{ user: AuthUser | null; requiresEmailConfirmation: boolean }>(
-        "/auth/register",
-        { email, password, full_name: fullName },
-        { withCredentials: true }
-      );
+  const register = useCallback(async (email: string, password: string, fullName?: string) => {
+    const response = await api.post<{ user: AuthUser | null; requiresEmailConfirmation: boolean }>(
+      "/auth/register",
+      { email, password, full_name: fullName },
+      { withCredentials: true }
+    );
 
-      if (response.data.user && !response.data.requiresEmailConfirmation) {
-        setUser(response.data.user);
-      }
+    if (response.data.user && !response.data.requiresEmailConfirmation) {
+      setUser(response.data.user);
+    }
 
-      return response.data.requiresEmailConfirmation;
-    },
-    []
-  );
+    return response.data.requiresEmailConfirmation;
+  }, []);
 
   const logout = useCallback(async () => {
     await api.post("/auth/logout", undefined, { withCredentials: true });
     setUser(null);
   }, []);
 
-  const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh }),
-    [user, loading, login, register, logout, refresh]
-  );
+  const value = useMemo(() => ({ user, loading, login, register, logout, refresh }), [user, loading, login, register, logout, refresh]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
