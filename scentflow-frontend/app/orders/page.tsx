@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
@@ -20,21 +21,28 @@ interface Order {
 }
 
 export default function OrdersPage() {
+  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading) return;
+    if (!user) {
+      router.replace(`/login?redirect=${encodeURIComponent("/orders")}`);
+      return;
+    }
 
     api.get<{ data: Order[] }>("/orders", { withCredentials: true })
       .then((response) => setOrders(response.data.data))
       .finally(() => setLoading(false));
-  }, [authLoading, user]);
+  }, [authLoading, user, router]);
 
   if (authLoading || loading) {
     return <main className="min-h-screen p-8">Memuat pesanan...</main>;
   }
+
+  if (!user) return null;
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10">
