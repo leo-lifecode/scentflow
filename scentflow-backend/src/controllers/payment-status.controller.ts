@@ -3,7 +3,8 @@ import { AuthenticatedRequest } from "../middleware/auth.middleware";
 import { syncPaymentStatus } from "../services/payment-status.service";
 
 export async function syncPaymentStatusController(req: AuthenticatedRequest, res: Response) {
-  const orderId = req.params.orderId;
+  const rawOrderId = req.params.orderId;
+  const orderId = typeof rawOrderId === "string" ? rawOrderId : null;
   const userId = req.user?.id;
 
   if (!userId) {
