@@ -21,6 +21,10 @@ function parseProductInput(body: Record<string, unknown>) {
   };
 }
 
+function getSingleRouteParam(value: string | string[] | undefined): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 export async function getProductsController(_req: Request, res: Response) {
   const data = await getProducts();
   res.status(200).json({ success: true, data });
@@ -32,11 +36,23 @@ export async function createProductController(req: Request, res: Response) {
 }
 
 export async function updateProductController(req: Request, res: Response) {
-  const data = await updateProduct(req.params.id, parseProductInput(req.body));
+  const id = getSingleRouteParam(req.params.id);
+  if (!id) {
+    res.status(400).json({ message: "ID produk tidak valid" });
+    return;
+  }
+
+  const data = await updateProduct(id, parseProductInput(req.body));
   res.status(200).json({ success: true, data });
 }
 
 export async function deleteProductController(req: Request, res: Response) {
-  await deleteProduct(req.params.id);
+  const id = getSingleRouteParam(req.params.id);
+  if (!id) {
+    res.status(400).json({ message: "ID produk tidak valid" });
+    return;
+  }
+
+  await deleteProduct(id);
   res.status(204).send();
 }
