@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutGrid, ShoppingBag, FileText, Users, ArrowLeft, LogOut, Sparkles } from "lucide-react";
+import { LayoutGrid, ShoppingBag, FileText, Users, ArrowLeft, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface AdminSidebarProps { productCount?: number; }
