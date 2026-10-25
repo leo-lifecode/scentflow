@@ -11,11 +11,26 @@ export async function listAdminOrders(_req: AuthenticatedRequest, res: Response)
 }
 
 export async function listAdminCustomers(_req: AuthenticatedRequest, res: Response) {
-  const { data, error } = await supabase.from("profiles")
-    .select("id,full_name,phone,role,created_at")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
-  res.json({ data: data ?? [] });
+  const [{ data: profiles, error: profileError }, { data: orders, error: orderError }] = await Promise.all([
+    supabase.from("profiles").select("id,full_name,phone,role,created_at").order("created_at", { ascending: false }),
+    supabase.from("orders").select("user_id,customer_name,customer_email,customer_phone"),
+  ]);
+  if (profileError) throw profileError;
+  if (orderError) throw orderError;
+  const byUser = new Map<string, { name?: string; email?: string; phone?: string; count: number }>();
+  for (const order of orders ?? []) {
+    const current = byUser.get(order.user_id) ?? { count: 0 };
+    byUser.set(order.user_id, {
+      name: current.name || order.customer_name || undefined,
+      email: current.email || order.customer_email || undefined,
+      phone: current.phone || order.customer_phone || undefined,
+      count: current.count + 1,
+    });
+  }
+  res.json({ data: (profiles ?? []).map((profile) => {
+    const details = byUser.get(profile.id);
+    return { ...profile, full_name: profile.full_name || details?.name || null, email: details?.email || null, phone: profile.phone || details?.phone || null, order_count: details?.count || 0 };
+  }) });
 }
 
 export async function updateOrderShipping(req: AuthenticatedRequest, res: Response) {
