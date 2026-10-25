@@ -12,7 +12,7 @@ export async function createCheckout(input: CheckoutServiceInput) {
   const quantities = new Map<string, number>();
   for (const item of items) quantities.set(item.product_id, (quantities.get(item.product_id) ?? 0) + item.quantity);
 
-  const { data: products, error: productsError } = await supabase.from("products").select("id, stock, price").in("id", [...quantities.keys()]);
+  const { data: products, error: productsError } = await supabase.from("products").select("id, name, stock, price").in("id", [...quantities.keys()]);
   if (productsError) throw productsError;
   if (!products) throw new Error("Gagal mengambil data produk dari database");
 
