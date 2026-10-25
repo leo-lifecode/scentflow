@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import AdminSidebar from "@/components/AdminSidebar";
 import AdminHeader from "@/components/AdminHeader";
@@ -19,12 +19,21 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState("");
-  const loadOrders = useCallback(async () => {
-    try { const response = await api.get("/admin/orders", { withCredentials: true }); setOrders(response.data.data ?? []); setError(""); }
-    catch { setError("Gagal memuat pesanan. Pastikan migrasi database sudah diterapkan dan sesi admin masih aktif."); }
-    finally { setLoading(false); }
+  useEffect(() => {
+    let active = true;
+    async function fetchOrders() {
+      try {
+        const response = await api.get("/admin/orders", { withCredentials: true });
+        if (active) { setOrders(response.data.data ?? []); setError(""); }
+      } catch {
+        if (active) setError("Gagal memuat pesanan. Pastikan migrasi database sudah diterapkan dan sesi admin masih aktif.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void fetchOrders();
+    return () => { active = false; };
   }, []);
-  useEffect(() => { void loadOrders(); }, [loadOrders]);
 
   async function saveShipping(order: Order, form: HTMLFormElement) {
     const data = new FormData(form);
@@ -35,7 +44,7 @@ export default function AdminOrdersPage() {
         shipping_courier: String(data.get("shipping_courier") || ""),
         tracking_number: String(data.get("tracking_number") || ""),
       }, { withCredentials: true });
-      await loadOrders();
+      const response = await api.get("/admin/orders", { withCredentials: true });\n      setOrders(response.data.data ?? []);
     } catch { setError("Status pengiriman gagal disimpan."); }
     finally { setSaving(null); }
   }
