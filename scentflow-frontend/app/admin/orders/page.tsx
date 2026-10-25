@@ -46,7 +46,8 @@ export default function AdminOrdersPage() {
       <main className="flex-1 space-y-5 p-6 lg:p-8">
         {error && <p className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error}</p>}
         {loading ? <p className="rounded-xl bg-white p-6 text-sm text-slate-500">Memuat pesanan...</p> : orders.length === 0 ? <p className="rounded-xl bg-white p-6 text-sm text-slate-500">Belum ada pesanan.</p> : orders.map(order => {
-          const isPaid = paid(order.status);\n          const shippingStatus = isPaid && (!order.shipping_status || order.shipping_status === "UNPAID") ? "PROCESSING" : order.shipping_status || "UNPAID";
+          const isPaid = paid(order.status);
+          const shippingStatus = isPaid && (!order.shipping_status || order.shipping_status === "UNPAID") ? "PROCESSING" : order.shipping_status || "UNPAID";
           return <article key={order.id} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
               <div><p className="font-bold text-slate-900">Pesanan #{order.id.slice(0, 8)}</p><p className="mt-1 text-xs text-slate-500">{new Date(order.created_at).toLocaleString("id-ID")}</p></div>
