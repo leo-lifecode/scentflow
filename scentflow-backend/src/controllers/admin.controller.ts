@@ -29,7 +29,7 @@ export async function listAdminCustomers(_req: AuthenticatedRequest, res: Respon
   }
   res.json({ data: (profiles ?? []).map((profile) => {
     const details = byUser.get(profile.id);
-    return { ...profile, full_name: profile.full_name || details?.name || null, email: details?.email || null, phone: profile.phone || details?.phone || null, order_count: details?.count || 0 };
+    return { ...profile, full_name: profile.full_name || details?.name || null, email: profile.email || details?.email || null, phone: profile.phone || details?.phone || null, order_count: details?.count || 0 };
   }) });
 }
 
