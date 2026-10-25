@@ -9,7 +9,7 @@ export async function createCheckoutController(req: AuthenticatedRequest, res: R
     return;
   }
 
-  const { customer_name, customer_email, items } = req.body as CheckoutInput;
+  const { customer_name, customer_email, customer_phone, shipping_address, items } = req.body as CheckoutInput;
 
   const data = await createCheckout({
     user_id: req.user.id,
