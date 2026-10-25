@@ -49,3 +49,4 @@ update public.profiles p
 set email = u.email
 from auth.users u
 where p.id = u.id and p.email is distinct from u.email;
+\nrevoke all on function public.sync_profile_from_auth() from public, anon, authenticated;\n
