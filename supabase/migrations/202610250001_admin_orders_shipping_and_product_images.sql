@@ -1,4 +1,6 @@
--- Additional customer delivery details and shipment tracking.
+-- Customer contact, shipping tracking, and product image storage.
+alter table public.profiles add column if not exists email text;
+
 alter table public.orders
   add column if not exists customer_phone text,
   add column if not exists shipping_address text,
@@ -6,18 +8,17 @@ alter table public.orders
   add column if not exists shipping_courier text,
   add column if not exists tracking_number text;
 
--- Product images are public for storefront display. Uploads are performed by the
--- authenticated admin backend using the Supabase server key, never from the browser.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('product-images', 'product-images', true, 5242880, array['image/jpeg','image/png'])
-on conflict (id) do update set public = true, file_size_limit = 5242880, allowed_mime_types = array['image/jpeg','image/png'];
+on conflict (id) do update
+set public = true, file_size_limit = 5242880, allowed_mime_types = array['image/jpeg','image/png'];
 
--- Keep a queryable customer email in the public profile table for the admin customer list.
+-- Sync safe profile fields from auth. Authorization continues to use app_metadata role.
 create or replace function public.sync_profile_from_auth()
 returns trigger
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = ''
 as $$
 begin
   insert into public.profiles (id, email, full_name, phone, role, created_at, updated_at)
@@ -40,6 +41,8 @@ begin
 end;
 $$;
 
+revoke all on function public.sync_profile_from_auth() from public, anon, authenticated;
+
 drop trigger if exists sync_profile_from_auth on auth.users;
 create trigger sync_profile_from_auth
 after insert or update of email, raw_user_meta_data, raw_app_meta_data on auth.users
@@ -49,4 +52,3 @@ update public.profiles p
 set email = u.email
 from auth.users u
 where p.id = u.id and p.email is distinct from u.email;
-\nrevoke all on function public.sync_profile_from_auth() from public, anon, authenticated;\n
