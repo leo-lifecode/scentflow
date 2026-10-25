@@ -22,7 +22,7 @@ export default function LoginPage() {
       const user = await login(email, password);
       const redirect = new URLSearchParams(window.location.search).get("redirect");
       const safeRedirect = redirect?.startsWith("/") && !redirect.startsWith("//");
-      const destination = safeRedirect
+      const destination = safeRedirect && redirect
         ? redirect
         : user.app_metadata?.role === "admin"
           ? "/admin/dashboard"
