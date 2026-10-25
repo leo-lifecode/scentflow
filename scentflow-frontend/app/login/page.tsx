@@ -19,9 +19,15 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await login(email, password);
+      const user = await login(email, password);
       const redirect = new URLSearchParams(window.location.search).get("redirect");
-      router.replace(redirect?.startsWith("/") ? redirect : "/");
+      const safeRedirect = redirect?.startsWith("/") && !redirect.startsWith("//");
+      const destination = safeRedirect
+        ? redirect
+        : user.app_metadata?.role === "admin"
+          ? "/admin/dashboard"
+          : "/";
+      router.replace(destination);
     } catch {
       setError("Email atau kata sandi tidak valid.");
     } finally {
@@ -33,7 +39,7 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-bold text-slate-900">Masuk ke ScentFlow</h1>
-        <p className="mt-2 text-sm text-slate-500">Gunakan akun pelanggan kamu.</p>
+        <p className="mt-2 text-sm text-slate-500">Masuk menggunakan akun ScentFlow kamu.</p>
 
         {error && (
           <p className="mt-4 rounded-lg bg-rose-50 p-3 text-sm text-rose-600">{error}</p>
