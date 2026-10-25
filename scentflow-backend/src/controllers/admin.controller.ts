@@ -12,7 +12,7 @@ export async function listAdminOrders(_req: AuthenticatedRequest, res: Response)
 
 export async function listAdminCustomers(_req: AuthenticatedRequest, res: Response) {
   const [{ data: profiles, error: profileError }, { data: orders, error: orderError }] = await Promise.all([
-    supabase.from("profiles").select("id,full_name,phone,role,created_at").order("created_at", { ascending: false }),
+    supabase.from("profiles").select("id,full_name,email,phone,role,created_at").order("created_at", { ascending: false }),
     supabase.from("orders").select("user_id,customer_name,customer_email,customer_phone"),
   ]);
   if (profileError) throw profileError;
