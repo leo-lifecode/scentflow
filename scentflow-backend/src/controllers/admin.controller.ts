@@ -40,6 +40,12 @@ export async function updateOrderShipping(req: AuthenticatedRequest, res: Respon
     res.status(400).json({ message: "Status pengiriman tidak valid" });
     return;
   }
+  const { data: existingOrder, error: lookupError } = await supabase.from("orders").select("status").eq("id", req.params.id).single();
+  if (lookupError) throw lookupError;
+  if (!["success", "settlement", "paid"].includes(String(existingOrder.status).toLowerCase())) {
+    res.status(409).json({ message: "Pengiriman hanya dapat diproses setelah pembayaran berhasil" });
+    return;
+  }
   const { data, error } = await supabase.from("orders").update({
     shipping_status,
     shipping_courier: typeof shipping_courier === "string" ? shipping_courier.trim() || null : null,
