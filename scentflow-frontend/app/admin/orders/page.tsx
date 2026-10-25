@@ -20,7 +20,6 @@ export default function AdminOrdersPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState("");
   const loadOrders = useCallback(async () => {
-    setLoading(true);
     try { const response = await api.get("/admin/orders", { withCredentials: true }); setOrders(response.data.data ?? []); setError(""); }
     catch { setError("Gagal memuat pesanan. Pastikan migrasi database sudah diterapkan dan sesi admin masih aktif."); }
     finally { setLoading(false); }
