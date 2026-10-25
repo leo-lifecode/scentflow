@@ -44,7 +44,8 @@ export default function AdminOrdersPage() {
         shipping_courier: String(data.get("shipping_courier") || ""),
         tracking_number: String(data.get("tracking_number") || ""),
       }, { withCredentials: true });
-      const response = await api.get("/admin/orders", { withCredentials: true });\n      setOrders(response.data.data ?? []);
+      const response = await api.get("/admin/orders", { withCredentials: true });
+      setOrders(response.data.data ?? []);
     } catch { setError("Status pengiriman gagal disimpan."); }
     finally { setSaving(null); }
   }
