@@ -74,7 +74,7 @@ export default function AdminProductsPage() {
   const chooseImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
       setError("Gunakan gambar JPG, PNG, atau WebP.");
       event.target.value = "";
       return;
@@ -204,8 +204,8 @@ export default function AdminProductsPage() {
                 <label className="block text-xs font-semibold text-slate-600">Jumlah stok<input type="number" min="0" step="1" required value={form.stock} onChange={(event) => setField("stock", event.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-900" /><span className="mt-1 block font-normal text-slate-400">Isi 0 jika stok habis, atau tambah angka untuk restock.</span></label>
                 <label className="block text-xs font-semibold text-slate-600">Deskripsi<textarea rows={3} value={form.description} onChange={(event) => setField("description", event.target.value)} className="mt-1.5 w-full resize-y rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-900" /></label>
                 <div>
-                  <label className="mb-2 block text-xs font-semibold text-slate-600">Gambar produk (JPG, PNG, WebP, maks. 5 MB)</label>
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 hover:border-amber-500"><ImagePlus className="h-5 w-5 text-amber-600" /><span className="text-xs text-slate-600">{imageFile ? imageFile.name : "Pilih gambar dari perangkat"}</span><input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={chooseImage} /></label>
+                  <label className="mb-2 block text-xs font-semibold text-slate-600">Gambar produk (JPG/PNG, maks. 5 MB)</label>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 hover:border-amber-500"><ImagePlus className="h-5 w-5 text-amber-600" /><span className="text-xs text-slate-600">{imageFile ? imageFile.name : "Pilih gambar dari perangkat"}</span><input type="file" accept="image/jpeg,image/png" className="hidden" onChange={chooseImage} /></label>
                   {preview && <div className="relative mt-3 w-28"><img src={preview} alt="Pratinjau produk" className="h-28 w-28 rounded-xl border border-slate-200 object-cover" /><button type="button" onClick={() => { setImageFile(null); setPreview(""); setField("image_url", ""); }} className="absolute -right-2 -top-2 rounded-full bg-white p-1.5 shadow" aria-label="Hapus gambar"><X className="h-4 w-4" /></button></div>}
                   <label className="mt-3 block text-xs text-slate-500">Atau URL gambar<input type="url" value={form.image_url} onChange={(event) => { setField("image_url", event.target.value); setImageFile(null); setPreview(event.target.value); }} placeholder="https://..." className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-normal text-slate-900" /></label>
                 </div>
