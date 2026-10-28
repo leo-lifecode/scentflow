@@ -97,7 +97,7 @@ export default function HomePage() {
       <Navbar onOpenCart={() => setIsCartOpen(true)} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8">
         <section className="pb-16">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">Shop by scent</p><h2 className="mt-1 font-serif text-3xl text-slate-950 sm:text-4xl">Koleksi parfum</h2><p className="mt-2 text-sm text-slate-500">Gunakan filter untuk menemukan ukuran dan karakter aroma yang cocok.</p></div>
