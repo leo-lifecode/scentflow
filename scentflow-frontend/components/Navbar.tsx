@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ShoppingBag, Search, User, Menu, X, Package, LogOut, ShoppingCart, SlidersHorizontal } from "lucide-react";
+import { ShoppingBag, Search, User, Menu, X, Package, LogOut, ShoppingCart, SlidersHorizontal, Sparkles } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
