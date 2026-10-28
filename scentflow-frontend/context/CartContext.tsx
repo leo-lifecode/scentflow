@@ -9,7 +9,7 @@ interface CartContextType {
   clearCart: () => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -17,58 +17,46 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const addToCart = (product: Product) => {
-    setCart((prevCart) => {
-      const existingIndex = prevCart.findIndex(
-        (item) => item.id === product.id,
-      );
-
-      if (existingIndex > -1) {
-        const updated = [...prevCart];
-        if (updated[existingIndex].quantity < product.stock) {
-          updated[existingIndex].quantity += 1;
-        }
-        return updated;
+  const addToCart = (product: Product, quantity = 1) => {
+    const amount = Math.max(1, Math.floor(quantity));
+    setCart((previous) => {
+      const existing = previous.find((item) => item.id === product.id);
+      if (existing) {
+        return previous.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: Math.min(product.stock, item.quantity + amount) }
+            : item,
+        );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+      if (product.stock <= 0) return previous;
+      return [...previous, { ...product, quantity: Math.min(product.stock, amount) }];
     });
   };
 
   const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    setCart((previous) => previous.filter((item) => item.id !== productId));
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) return removeFromCart(productId);
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
 
-    setCart((prevCart) =>
-      prevCart.map((item) => {
-        if (item.id === productId) {
-          return { ...item, quantity };
-        } else {
-          return item;
-        }
-      }),
+    setCart((previous) =>
+      previous.map((item) =>
+        item.id === productId
+          ? { ...item, quantity: Math.min(item.stock, Math.floor(quantity)) }
+          : item,
+      ),
     );
   };
 
   const clearCart = () => setCart([]);
-  const totalPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <CartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        totalPrice,
-      }}
-    >
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice }}>
       {children}
     </CartContext.Provider>
   );
@@ -76,7 +64,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (!context)
-    throw new Error("useCart harus digunakan di dalam CartProvider");
+  if (!context) throw new Error("useCart harus digunakan di dalam CartProvider");
   return context;
 }

@@ -112,7 +112,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             ) : (
               cart.map((item) => (
                 <div key={item.id} className="pt-2 flex items-center justify-between gap-3">
-                  <div className="flex-1 min-w-0"><h4 className="font-serif font-medium text-slate-900 text-sm truncate">{item.name}</h4><p className="text-slate-500 text-xs font-semibold mt-0.5">Rp {item.price.toLocaleString("id-ID")}</p></div>
+                  <div className="flex-1 min-w-0"><h4 className="font-serif font-medium text-slate-900 text-sm truncate">{item.name}</h4><p className="mt-0.5 text-[10px] text-slate-500">{item.size ? `${item.size} ml` : "Ukuran belum diatur"}{item.variant ? ` · ${item.variant}` : ""}</p><p className="text-slate-500 text-xs font-semibold mt-0.5">Rp {Number(item.price).toLocaleString("id-ID")}</p></div>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200/60">
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 hover:bg-white rounded text-slate-700 transition-colors"><Minus className="w-3 h-3" /></button>
