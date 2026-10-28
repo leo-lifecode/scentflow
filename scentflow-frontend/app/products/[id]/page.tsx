@@ -43,10 +43,25 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     return () => { active = false; };
   }, [productId]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || product.stock <= 0) return;
-    addToCart(product, quantity);
-    setIsCartOpen(true);
+    try {
+      const response = await api.get("/products");
+      const latestProducts: Product[] = response.data.data || response.data || [];
+      setAllProducts(latestProducts);
+      const latest = latestProducts.find((item) => String(item.id) === String(product.id));
+      if (!latest || latest.stock <= 0) {
+        setProduct(latest || { ...product, stock: 0 });
+        setQuantity(1);
+        return;
+      }
+      if (quantity > latest.stock) setQuantity(latest.stock);
+      addToCart(latest, Math.min(quantity, latest.stock));
+      setProduct(latest);
+      setIsCartOpen(true);
+    } catch {
+      window.alert("Stok belum bisa diverifikasi. Coba lagi sebelum menambahkan produk ke keranjang.");
+    }
   };
 
   if (loading) {

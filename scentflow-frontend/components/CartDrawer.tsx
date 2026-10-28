@@ -51,6 +51,29 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
     setLoading(true);
     try {
+      // Always re-check live stock; the product may have sold out while sitting in the cart.
+      const catalogueResponse = await api.get("/products");
+      const liveProducts = catalogueResponse.data.data || catalogueResponse.data || [];
+      const liveById = new Map<string, { stock: number; price: number; name: string; image_url?: string | null; variant?: string | null; size?: number | null }>(
+        liveProducts.map((product: { id: string; stock: number; price: number; name: string; image_url?: string | null; variant?: string | null; size?: number | null }) => [String(product.id), product] as const),
+      );
+      let stockProblem = false;
+      for (const item of cart) {
+        const live = liveById.get(String(item.id));
+        if (!live || live.stock <= 0) {
+          updateQuantity(item.id, 0);
+          stockProblem = true;
+        } else if (item.quantity > live.stock) {
+          updateQuantity(item.id, live.stock);
+          stockProblem = true;
+        }
+      }
+      if (stockProblem) {
+        alert("Stok katalog berubah. Item habis dihapus dari keranjang dan jumlah yang melebihi stok disesuaikan. Periksa keranjang sebelum checkout.");
+        setLoading(false);
+        return;
+      }
+
       const payload = {
         customer_name: name,
         customer_email: email,
