@@ -18,7 +18,7 @@ export default function AdminHeader({
   onSearchChange,
 }: AdminHeaderProps) {
   return (
-    <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 px-8 py-5 flex items-center justify-between border-b border-slate-200/70">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/95 px-8 py-5 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.20)] backdrop-blur-md">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
         <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>
