@@ -55,7 +55,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
       const catalogueResponse = await api.get("/products");
       const liveProducts = catalogueResponse.data.data || catalogueResponse.data || [];
       const liveById = new Map<string, { stock: number; price: number; name: string; image_url?: string | null; variant?: string | null; size?: number | null }>(
-        liveProducts.map((product: { id: string; stock: number; price: number; name: string; image_url?: string | null; variant?: string | null; size?: number | null }) => [String(product.id), product]),
+        liveProducts.map((product: { id: string; stock: number; price: number; name: string; image_url?: string | null; variant?: string | null; size?: number | null }) => [String(product.id), product] as const),
       );
       let stockProblem = false;
       for (const item of cart) {
