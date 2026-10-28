@@ -75,6 +75,23 @@ export default function HomePage() {
     setSort("recommended");
   };
 
+  const handleAddToCart = async (product: Product) => {
+    try {
+      const response = await api.get("/products");
+      const liveProducts: Product[] = response.data.data || response.data || [];
+      setProducts(liveProducts);
+      const liveProduct = liveProducts.find((item) => String(item.id) === String(product.id));
+      if (!liveProduct || liveProduct.stock <= 0) {
+        alert("Maaf, stok produk ini sudah habis.");
+        return;
+      }
+      addToCart(liveProduct);
+      setIsCartOpen(true);
+    } catch {
+      alert("Stok belum bisa diverifikasi. Coba lagi sebelum menambahkan produk ke keranjang.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8f7f4] font-sans text-slate-900 antialiased">
       <Navbar onOpenCart={() => setIsCartOpen(true)} />
@@ -174,7 +191,7 @@ export default function HomePage() {
                           <p className="mt-2 line-clamp-2 min-h-9 text-xs leading-5 text-slate-500">{product.description || "Aroma pilihan untuk melengkapi karakter dan suasana harian."}</p>
                           <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
                             <div><p className="text-[9px] uppercase tracking-wider text-slate-400">Harga</p><p className="mt-1 text-sm font-bold text-slate-950">{money(Number(product.price))}</p><p className="mt-1 text-[10px] text-slate-400">Stok: {product.stock} botol</p></div>
-                            <button disabled={outOfStock} onClick={() => { addToCart(product); setIsCartOpen(true); }} className="flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-950 px-3 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"><ShoppingBag className="h-3.5 w-3.5 text-amber-400" />Tambah</button>
+                            <button disabled={outOfStock} onClick={() => { void handleAddToCart(product); }} className="flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-950 px-3 py-2.5 text-[10px] font-bold uppercase tracking-wide text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"><ShoppingBag className="h-3.5 w-3.5 text-amber-400" />Tambah</button>
                           </div>
                         </div>
                       </article>
