@@ -8,252 +8,102 @@ import { Product } from "@/types";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
-import {
-  ShoppingBag,
-  ShieldCheck,
-  Truck,
-  Award,
-  ArrowLeft,
-  Plus,
-  Minus,
-  Sparkles,
-} from "lucide-react";
+import { ShoppingBag, ShieldCheck, Truck, Award, ArrowLeft, Plus, Minus, Sparkles } from "lucide-react";
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const productId = resolvedParams.id;
   const router = useRouter();
   const { addToCart } = useCart();
-
-  const [product, setProduct] = useState<Product | null>(null);\n  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
-  const [quantity, setQuantity] = useState<number>(1);
-  const [selectedSize, setSelectedSize] = useState<string>("50ml");
+  const [product, setProduct] = useState<Product | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    let isMounted = true;
-
+    let active = true;
     async function fetchProductDetail() {
       try {
         const response = await api.get("/products");
-        const allProducts: Product[] = response.data.data || response.data || [];
-        const found = allProducts.find((p) => String(p.id) === String(productId));
-
-        if (isMounted) {
+        const products: Product[] = response.data.data || response.data || [];
+        const found = products.find((item) => String(item.id) === String(productId));
+        if (active) {
+          setAllProducts(products);
           setProduct(found || null);
+          setQuantity(1);
         }
       } catch (error) {
         console.error("Gagal mengambil detail produk:", error);
       } finally {
-        if (isMounted) setLoading(false);
+        if (active) setLoading(false);
       }
     }
-
-    fetchProductDetail();
-
-    return () => {
-      isMounted = false;
-    };
+    void fetchProductDetail();
+    return () => { active = false; };
   }, [productId]);
 
   const handleAddToCart = () => {
-    if (!product) return;
-    for (let i = 0; i < quantity; i++) {
-      addToCart(product);
-    }
+    if (!product || product.stock <= 0) return;
+    addToCart(product, quantity);
     setIsCartOpen(true);
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mr-3" />
-        Memuat detail wewangian...
-      </div>
-    );
+    return <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500"><div className="mr-3 h-8 w-8 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />Memuat detail parfum...</div>;
   }
 
   if (!product) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <h2 className="text-xl font-serif text-slate-900 mb-2">Produk Tidak Ditemukan</h2>
-        <p className="text-slate-500 text-xs mb-6">Varian parfum ini tidak tersedia di katalog atelier.</p>
-        <Link
-          href="/"
-          className="bg-slate-950 text-white px-5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Kembali ke Katalog
-        </Link>
-      </div>
-    );
+    return <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4"><h2 className="mb-2 font-serif text-xl text-slate-900">Produk tidak ditemukan</h2><p className="mb-6 text-xs text-slate-500">Varian parfum ini belum tersedia di katalog.</p><Link href="/" className="flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-2.5 text-xs font-semibold text-white"><ArrowLeft className="h-4 w-4" />Kembali ke katalog</Link></div>;
   }
 
-  const isOutOfStock = product.stock <= 0;\n  const productVariants = allProducts\n    .filter((item) => item.name === product.name && (item.variant ?? "") === (product.variant ?? ""))\n    .filter((item) => typeof item.size === "number")\n    .sort((a, b) => Number(a.size) - Number(b.size));
+  const isOutOfStock = product.stock <= 0;
+  const variants = allProducts
+    .filter((item) => item.name === product.name && (item.variant ?? "") === (product.variant ?? "") && typeof item.size === "number")
+    .sort((a, b) => Number(a.size) - Number(b.size));
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
+    <div className="min-h-screen bg-[#f8f7f4] font-sans text-slate-900 antialiased">
       <Navbar onOpenCart={() => setIsCartOpen(true)} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-20">
-        {/* Breadcrumb & Navigation */}
-        <div className="mb-6 flex items-center gap-2 text-xs text-slate-500">
-          <Link href="/" className="hover:text-slate-900 transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-3.5 h-3.5" /> Beranda Toko
-          </Link>
-          <span>/</span>
-          <span className="text-slate-900 font-medium truncate">{product.name}</span>
-        </div>
-
-        {/* Layout Grid 2 Kolom */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Kolom Kiri: Galeri Gambar Flacon */}
-          <div className="lg:col-span-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200/80">
-            <div className="relative w-full aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden">
-              <img
-                src={
-                  product.image_url ||
-                  "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80"
-                }
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 shadow-sm">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    isOutOfStock ? "bg-rose-500" : "bg-emerald-500"
-                  }`}
-                />
-                <span className="text-xs font-semibold text-slate-800">
-                  {isOutOfStock ? "Stok Habis" : `Tersedia ${product.stock} Botol`}
-                </span>
-              </div>
+      <main className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex items-center gap-2 text-xs text-slate-500"><Link href="/" className="flex items-center gap-1 transition hover:text-slate-900"><ArrowLeft className="h-3.5 w-3.5" />Beranda</Link><span>/</span><span className="truncate font-medium text-slate-900">{product.name}</span></div>
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-12">
+          <div className="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
+            <div className="relative aspect-[4/4.5] overflow-hidden rounded-2xl bg-slate-100">
+              <img src={product.image_url || "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80"} alt={`${product.name}${product.size ? ` ${product.size} ml` : ""}`} className="h-full w-full object-cover" />
+              <span className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-semibold ${isOutOfStock ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>{isOutOfStock ? "Stok habis" : `Tersedia · ${product.stock} botol`}</span>
             </div>
           </div>
-
-          {/* Kolom Kanan: Rincian Formulasi & Pembelian */}
-          <div className="lg:col-span-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 py-1">
             <div>
-              <span className="text-xs font-bold uppercase tracking-widest text-amber-600 block mb-1">
-                Extrait de Parfum • Haute Collection
-              </span>
-              <h1 className="text-3xl sm:text-4xl font-serif text-slate-950 font-medium mb-3">
-                {product.name}
-              </h1>
-              <p className="text-2xl font-bold text-slate-950">
-                Rp {product.price.toLocaleString("id-ID")}
-              </p>
+              <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">{product.variant || "Signature collection"}</span>
+              <h1 className="font-serif text-3xl font-medium tracking-tight text-slate-950 sm:text-4xl">{product.name}</h1>
+              <p className="mt-4 text-2xl font-bold text-slate-950">Rp {Number(product.price).toLocaleString("id-ID")}</p>
+              <p className="mt-1 text-xs text-slate-500">{product.size ? `Ukuran botol ${product.size} ml` : "Ukuran botol belum ditentukan"}</p>
             </div>
-
-            <div className="border-t border-b border-slate-200 py-4">
-              <p className="text-slate-600 text-sm leading-relaxed">
-                {product.description ||
-                  "Komposisi wewangian mewah dengan maceration 90 hari di tangki baja stainless untuk menghasilkan daya tahan dan ketajaman aroma tingkat tinggi."}
-              </p>
-            </div>
-
-            {/* Piramida Olfaktori (Scent Notes) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 space-y-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Piramida Olfaktori
-              </span>
-              <div className="grid grid-cols-3 gap-2 text-xs text-center">
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <span className="text-slate-400 text-[10px] block uppercase font-bold">Top Notes</span>
-                  <span className="font-medium text-slate-800">Bergamot &amp; Peppercorn</span>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <span className="text-slate-400 text-[10px] block uppercase font-bold">Heart Notes</span>
-                  <span className="font-medium text-slate-800">Damask Rose &amp; Iris</span>
-                </div>
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <span className="text-slate-400 text-[10px] block uppercase font-bold">Base Notes</span>
-                  <span className="font-medium text-slate-800">Cendana &amp; Amber</span>
+            <div className="border-y border-slate-200 py-5"><p className="text-sm leading-7 text-slate-600">{product.description || "Parfum pilihan untuk melengkapi karakter dan suasana harian."}</p></div>
+            {variants.length > 0 && (
+              <div>
+                <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-slate-500">Ukuran botol</label>
+                <div className="flex flex-wrap gap-2">
+                  {variants.map((variant) => <button key={variant.id} disabled={variant.stock <= 0} onClick={() => { setQuantity(1); router.push(`/products/${variant.id}`); }} className={`rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-40 ${variant.id === product.id ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"}`}><span className="block text-sm font-semibold">{variant.size} ml</span><span className={`mt-1 block text-[10px] ${variant.id === product.id ? "text-slate-300" : "text-slate-500"}`}>Rp {Number(variant.price).toLocaleString("id-ID")}</span></button>)}
                 </div>
               </div>
-            </div>
-
-            {/* Pilihan Ukuran & Jumlah */}
-            <div className="space-y-4">
-              {productVariants.length > 0 && (
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-2">
-                    Ukuran Botol
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    {productVariants.map((variant) => (
-                      <button
-                        key={variant.id}
-                        disabled={variant.stock <= 0}
-                        onClick={() => {
-                          setProduct(variant);
-                          setQuantity(1);
-                          router.replace(`/products/${variant.id}`);
-                        }}
-                        className={`rounded-lg border px-4 py-2 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
-                          variant.id === product.id
-                            ? "border-slate-950 bg-slate-950 text-white shadow-sm"
-                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
-                        }`}
-                      >
-                        {variant.size} ml · Rp {Number(variant.price).toLocaleString("id-ID")}
-                      </button>
-                    ))}
-                  </div>
+            )}
+            <div>
+              <label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-slate-500">Jumlah</label>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1">
+                  <button aria-label="Kurangi jumlah" disabled={quantity <= 1} onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30"><Minus className="h-4 w-4" /></button>
+                  <span className="w-9 text-center text-sm font-bold">{quantity}</span>
+                  <button aria-label="Tambah jumlah" disabled={quantity >= product.stock} onClick={() => setQuantity((value) => Math.min(product.stock, value + 1))} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 disabled:opacity-30"><Plus className="h-4 w-4" /></button>
                 </div>
-              )}
-
-              {/* Quantity Stepper & Tombol CTA */}
-              <div className="flex items-center gap-4 pt-2">
-                <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1">
-                  <button
-                    disabled={quantity <= 1}
-                    onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 disabled:opacity-30"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-8 text-center text-xs font-bold">{quantity}</span>
-                  <button
-                    disabled={quantity >= product.stock}
-                    onClick={() => setQuantity((prev) => Math.min(product.stock, prev + 1))}
-                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 disabled:opacity-30"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <button
-                  disabled={isOutOfStock}
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-slate-950 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white py-3 rounded-xl font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
-                >
-                  <ShoppingBag className="w-4 h-4 text-amber-400" />
-                  {isOutOfStock ? "Stok Habis" : "Tambah ke Keranjang"}
-                </button>
+                <button disabled={isOutOfStock} onClick={handleAddToCart} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"><ShoppingBag className="h-4 w-4 text-amber-400" />{isOutOfStock ? "Stok habis" : "Tambah ke keranjang"}</button>
               </div>
             </div>
-
-            {/* Trust Badges */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-slate-200 text-slate-600 text-xs">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Garansi BPOM Resmi</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Truck className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Pengiriman Thermal</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>2x Vial Discovery Sample</span>
-              </div>
-            </div>
+            <div className="grid grid-cols-3 gap-3 border-t border-slate-200 pt-5 text-[10px] text-slate-600"><div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 shrink-0 text-amber-700" /><span>Checkout aman</span></div><div className="flex items-center gap-2"><Truck className="h-4 w-4 shrink-0 text-amber-700" /><span>Info pengiriman</span></div><div className="flex items-center gap-2"><Award className="h-4 w-4 shrink-0 text-amber-700" /><span>Pilihan kurasi</span></div></div>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><p className="flex items-center gap-2 text-xs font-semibold text-amber-950"><Sparkles className="h-4 w-4" />Varian ukuran dan harga terhubung ke katalog</p><p className="mt-1 text-xs leading-5 text-amber-900/75">Setiap ukuran adalah produk tersendiri, sehingga stok, harga, dan jumlah keranjang dihitung secara terpisah.</p></div>
           </div>
         </div>
       </main>
