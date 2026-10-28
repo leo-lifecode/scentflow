@@ -9,7 +9,7 @@ import { useCart } from "@/context/CartContext";
 export default function CheckoutPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { cart, totalPrice, clearCart } = useCart();
+  const { cart, totalPrice, clearCart, updateQuantity } = useCart();
   const [name, setName] = useState(String(user?.user_metadata?.full_name ?? ""));
   const [phone, setPhone] = useState(String(user?.user_metadata?.phone ?? ""));
   const [address, setAddress] = useState("");
@@ -25,6 +25,27 @@ export default function CheckoutPage() {
     if (!user || cart.length === 0) return;
     setLoading(true); setError("");
     try {
+      const catalogueResponse = await api.get("/products");
+      const liveProducts = catalogueResponse.data.data || catalogueResponse.data || [];
+      const liveById = new Map<string, { stock: number }>(
+        liveProducts.map((product: { id: string; stock: number }) => [String(product.id), product]),
+      );
+      let stockProblem = false;
+      for (const item of cart) {
+        const live = liveById.get(String(item.id));
+        if (!live || live.stock <= 0) {
+          updateQuantity(item.id, 0);
+          stockProblem = true;
+        } else if (item.quantity > live.stock) {
+          updateQuantity(item.id, live.stock);
+          stockProblem = true;
+        }
+      }
+      if (stockProblem) {
+        setError("Stok produk berubah. Item habis dihapus dan jumlah yang melebihi stok disesuaikan. Periksa keranjang lalu coba checkout kembali.");
+        setLoading(false);
+        return;
+      }
       const response = await api.post("/checkout", {
         customer_name: name, customer_email: user.email, customer_phone: phone, shipping_address: address,
         items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity })),
