@@ -18,17 +18,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const addToCart = (product: Product, quantity = 1) => {
+    if (product.stock <= 0) return;
     const amount = Math.max(1, Math.floor(quantity));
     setCart((previous) => {
       const existing = previous.find((item) => item.id === product.id);
       if (existing) {
         return previous.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: Math.min(product.stock, item.quantity + amount) }
+            ? { ...item, ...product, quantity: Math.min(product.stock, item.quantity + amount) }
             : item,
         );
       }
-      if (product.stock <= 0) return previous;
       return [...previous, { ...product, quantity: Math.min(product.stock, amount) }];
     });
   };
@@ -38,11 +38,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
+    const current = cart.find((item) => item.id === productId);
+    if (quantity <= 0 || (current && current.stock <= 0)) {
       removeFromCart(productId);
       return;
     }
-
     setCart((previous) =>
       previous.map((item) =>
         item.id === productId
