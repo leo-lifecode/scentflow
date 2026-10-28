@@ -4,7 +4,9 @@ export interface Product {
   description: string;
   stock: number;
   price: number;
-  image_url?: string;
+  image_url?: string | null;
+  variant?: string | null;
+  size?: number | null;
 }
 
 export interface CartItem extends Product {
