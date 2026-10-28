@@ -28,7 +28,7 @@ export default function CheckoutPage() {
       const catalogueResponse = await api.get("/products");
       const liveProducts = catalogueResponse.data.data || catalogueResponse.data || [];
       const liveById = new Map<string, { stock: number }>(
-        liveProducts.map((product: { id: string; stock: number }) => [String(product.id), product]),
+        liveProducts.map((product: { id: string; stock: number }) => [String(product.id), product] as const),
       );
       let stockProblem = false;
       for (const item of cart) {
