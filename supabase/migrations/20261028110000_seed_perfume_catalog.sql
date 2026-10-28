@@ -4,10 +4,10 @@ insert into public.products (name, variant, size, price, stock, description, ima
 select seed.name, seed.variant, seed.size, seed.price, seed.stock, seed.description, seed.image_url
 from (values
   ('Dior Sauvage Eau de Toilette', 'Fresh · Citrus · Woody', 30::smallint, 1490000::numeric, 10::smallint,
-   'Wewangian fresh, citrus, dan woody dengan bergamot Calabria, ambroxan, elemi, dan jejak kayu. Harga katalog awal untuk varian 30 ml.',
+   'Wewangian fresh, citrus, dan woody dengan bergamot Calabria, ambroxan, elemi, dan jejak kayu. Varian botol 30 ml.',
    'https://whitelabel.dior.com/dw/image/v2/BJSW_PRD/on/demandware.static/-/Sites-pcd-whitelabel-master/default/dwf917568b/Y0685240/Y0685240_C099600545_E01_GHC.jpg?sh=700&sw=700'),
   ('Dior Sauvage Eau de Toilette', 'Fresh · Citrus · Woody', 100::smallint, 2390000::numeric, 10::smallint,
-   'Wewangian fresh, citrus, dan woody dengan bergamot Calabria, ambroxan, elemi, dan jejak kayu. Harga katalog awal untuk varian 100 ml.',
+   'Wewangian fresh, citrus, dan woody dengan bergamot Calabria, ambroxan, elemi, dan jejak kayu. Varian botol 100 ml.',
    'https://whitelabel.dior.com/dw/image/v2/BJSW_PRD/on/demandware.static/-/Sites-pcd-whitelabel-master/default/dwf917568b/Y0685240/Y0685240_C099600545_E01_GHC.jpg?sh=700&sw=700'),
   ('Versace Dylan Blue Pour Homme EDT', 'Aromatic · Aquatic', 50::smallint, 1704000::numeric, 10::smallint,
    'Karakter aromatik dengan nuansa aquatic, bergamot, grapefruit, daun fig, saffron, patchouli, musk, tonka bean, dan incense.',
