@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ShoppingBag, Sparkles, Search, User, Menu, X, Package, LogOut, ShoppingCart, SlidersHorizontal } from "lucide-react";
+import { ShoppingBag, Search, User, Menu, X, Package, LogOut, ShoppingCart, SlidersHorizontal } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -28,10 +28,10 @@ export default function Navbar({ onOpenCart }: { onOpenCart: () => void }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 shadow-[0_8px_24px_-12px_rgba(15,23,42,0.22)] backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" aria-label="ScentFlow beranda" className="flex shrink-0 items-center gap-3">
-          <div className="rounded-xl bg-slate-950 p-2 text-white shadow-sm"><Sparkles className="h-5 w-5 text-amber-500" /></div>
+          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"><img src="/logo-parfum.svg" alt="" className="h-full w-full object-contain" /></div>
           <div className="flex flex-col">
             <span className="font-serif text-2xl font-bold tracking-tight text-slate-950">Scent<span className="font-sans font-normal text-amber-600">Flow</span></span>
             <span className="-mt-1 text-[9px] font-semibold uppercase tracking-widest text-slate-400">Haute Parfumerie</span>
@@ -89,7 +89,7 @@ export default function Navbar({ onOpenCart }: { onOpenCart: () => void }) {
               ) : (
                 <>
                   <Link onClick={() => setMenuOpen(false)} href="/login" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-700 transition hover:bg-slate-50"><User className="h-4 w-4 text-slate-500" />Login</Link>
-                  <Link onClick={() => setMenuOpen(false)} href="/register" className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-700 transition hover:bg-slate-50"><User className="h-4 w-4 text-slate-500" />Buat akun</Link>
+                  
                 </>
               )}
             </div>
