@@ -29,7 +29,7 @@ export default function ProductDetailPage({
   const router = useRouter();
   const { addToCart } = useCart();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);\n  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
@@ -93,7 +93,7 @@ export default function ProductDetailPage({
     );
   }
 
-  const isOutOfStock = product.stock <= 0;
+  const isOutOfStock = product.stock <= 0;\n  const productVariants = allProducts\n    .filter((item) => item.name === product.name && (item.variant ?? "") === (product.variant ?? ""))\n    .filter((item) => typeof item.size === "number")\n    .sort((a, b) => Number(a.size) - Number(b.size));
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
@@ -180,26 +180,33 @@ export default function ProductDetailPage({
 
             {/* Pilihan Ukuran & Jumlah */}
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-2">
-                  Ukuran Botol
-                </label>
-                <div className="flex gap-3">
-                  {["50ml", "100ml"].map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                        selectedSize === size
-                          ? "bg-slate-950 text-white shadow-sm"
-                          : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+              {productVariants.length > 0 && (
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 block mb-2">
+                    Ukuran Botol
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {productVariants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        disabled={variant.stock <= 0}
+                        onClick={() => {
+                          setProduct(variant);
+                          setQuantity(1);
+                          router.replace(`/products/${variant.id}`);
+                        }}
+                        className={`rounded-lg border px-4 py-2 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+                          variant.id === product.id
+                            ? "border-slate-950 bg-slate-950 text-white shadow-sm"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        {variant.size} ml · Rp {Number(variant.price).toLocaleString("id-ID")}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Quantity Stepper & Tombol CTA */}
               <div className="flex items-center gap-4 pt-2">
