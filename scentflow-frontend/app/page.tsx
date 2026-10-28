@@ -98,20 +98,6 @@ export default function HomePage() {
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <section className="relative my-7 overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-10 text-white sm:my-10 sm:px-10 sm:py-14">
-          <div className="pointer-events-none absolute -right-12 -top-24 h-72 w-72 rounded-full border border-amber-400/20 sm:right-12 sm:h-96 sm:w-96" />
-          <div className="pointer-events-none absolute -right-3 -top-14 h-60 w-60 rounded-full border border-amber-400/15 sm:right-20 sm:h-80 sm:w-80" />
-          <div className="relative max-w-2xl">
-            <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-300"><Sparkles className="h-3.5 w-3.5" /> Curated fragrance collection</span>
-            <h1 className="max-w-xl font-serif text-4xl font-medium leading-tight tracking-tight sm:text-6xl">Temukan aroma yang terasa seperti <span className="italic text-amber-300">kamu.</span></h1>
-            <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">Jelajahi parfum dari karakter fresh dan citrus sampai woody yang hangat. Pilih aroma, ukuran botol, dan anggaran tanpa harus berkeliling seperti sedang mencari jarum di toko parfum.</p>
-            <div className="mt-7 flex flex-wrap gap-3 text-xs text-slate-300">
-              <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><ShieldCheck className="h-4 w-4 text-amber-300" /> Katalog terpusat</span>
-              <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><ShoppingBag className="h-4 w-4 text-amber-300" /> Keranjang per varian</span>
-            </div>
-          </div>
-        </section>
-
         <section className="pb-16">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div><p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">Shop by scent</p><h2 className="mt-1 font-serif text-3xl text-slate-950 sm:text-4xl">Koleksi parfum</h2><p className="mt-2 text-sm text-slate-500">Gunakan filter untuk menemukan ukuran dan karakter aroma yang cocok.</p></div>

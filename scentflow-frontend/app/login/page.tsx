@@ -36,8 +36,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
-      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-stone-100 via-[#f8f7f4] to-amber-50 px-6">
+      <section className="w-full max-w-md rounded-2xl border border-white/80 bg-white p-8 shadow-[0_24px_70px_-18px_rgba(15,23,42,0.28),0_8px_24px_-12px_rgba(15,23,42,0.18)] ring-1 ring-slate-900/5 sm:p-10">
         <h1 className="text-2xl font-bold text-slate-900">Masuk ke ScentFlow</h1>
         <p className="mt-2 text-sm text-slate-500">Masuk menggunakan akun ScentFlow kamu.</p>
 
